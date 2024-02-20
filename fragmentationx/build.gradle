@@ -11,5 +11,6 @@ android {
 
 dependencies {
     compileOnly "androidx.appcompat:appcompat:$rootProject.appCompatVersion"
-    api project(':fragmentation_core')
+    debugApi project(':fragmentationx-core')
+    releaseApi "me.yokeyword:fragmentationx-core:${rootProject.ext.buildNumber}"
 }

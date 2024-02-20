@@ -13,5 +13,6 @@ android {
 
 dependencies {
     compileOnly "androidx.appcompat:appcompat:$rootProject.appCompatVersion"
-    compileOnly project(':fragmentation')
+    debugImplementation project(':fragmentation')
+    releaseImplementation "me.yokeyword:fragmentation:${rootProject.ext.buildNumber}"
 }

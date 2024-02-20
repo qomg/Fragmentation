@@ -1,6 +1,7 @@
 package androidx.fragment.app;
 
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 /**
@@ -9,15 +10,7 @@ import java.util.List;
 public class FragmentationMagician {
 
     public static boolean isStateSaved(FragmentManager fragmentManager) {
-        if (!(fragmentManager instanceof FragmentManagerImpl))
-            return false;
-        try {
-            FragmentManagerImpl fragmentManagerImpl = (FragmentManagerImpl) fragmentManager;
-            return fragmentManagerImpl.isStateSaved();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return false;
+        return fragmentManager.isStateSaved();
     }
 
     /**
@@ -80,21 +73,30 @@ public class FragmentationMagician {
     }
 
     private static void hookStateSaved(FragmentManager fragmentManager, Runnable runnable) {
-        if (!(fragmentManager instanceof FragmentManagerImpl)) return;
-
-        FragmentManagerImpl fragmentManagerImpl = (FragmentManagerImpl) fragmentManager;
         if (isStateSaved(fragmentManager)) {
-            boolean tempStateSaved = fragmentManagerImpl.mStateSaved;
-            boolean tempStopped = fragmentManagerImpl.mStopped;
-            fragmentManagerImpl.mStateSaved = false;
-            fragmentManagerImpl.mStopped = false;
+            try {
+                Field mStateSaved = FragmentManager.class.getDeclaredField("mStateSaved");
+                Field mStopped = FragmentManager.class.getDeclaredField("mStopped");
+                mStateSaved.setAccessible(true);
+                mStopped.setAccessible(true);
 
-            runnable.run();
+                boolean tempStateSaved = mStateSaved.getBoolean(fragmentManager);
+                boolean tempStopped = mStopped.getBoolean(fragmentManager);
 
-            fragmentManagerImpl.mStopped = tempStopped;
-            fragmentManagerImpl.mStateSaved = tempStateSaved;
+                mStateSaved.setBoolean(fragmentManager, false);
+                mStopped.setBoolean(fragmentManager, false);
+
+                runnable.run();
+
+                mStopped.setBoolean(fragmentManager, tempStopped);
+                mStateSaved.setBoolean(fragmentManager, tempStateSaved);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         } else {
             runnable.run();
         }
     }
+
+
 }
